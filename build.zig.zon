@@ -13,5 +13,7 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
+        "find-build-sources.zig",
+        "mbedtls",
     },
 }
