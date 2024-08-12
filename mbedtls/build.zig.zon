@@ -3,8 +3,8 @@
     .version = "0.0.0",
     .dependencies = .{
         .mbedtls = .{
-            .url = "git+https://github.com/Mbed-TLS/mbedtls.git#v3.6.0",
-            .hash = "1220358fd78ebfb68dde5b77787d5325f1f89e901d448ae0da0187811be53dd3ec7c",
+            .url = "git+https://github.com/Mbed-TLS/mbedtls.git#v3.5.0",
+            .hash = "122021429e4b02fb07ba1c2c2bea93f15eaa8888bf8792bdc081c53540e6bbf45ebf",
         },
     },
     .paths = .{

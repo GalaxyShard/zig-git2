@@ -6,6 +6,12 @@ fn is_c_file(path: []const u8) bool {
     return std.mem.endsWith(u8, path, ".c");
 }
 
+const build_flags = .{
+    "-std=gnu17",
+    "-Werror",
+    "-Wall", "-Wextra", "-Wpedantic",
+};
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -29,14 +35,17 @@ pub fn build(b: *std.Build) !void {
 //     crypto.addCSourceFiles(.{
 //         .root = crypto_core.directory.dupe(b),
 //         .files = crypto_core.inner,
+//         .flags = &build_flags,
 //     });
 //     crypto.addCSourceFiles(.{
 //         .root = crypto_drivers.directory.dupe(b),
 //         .files = crypto_drivers.inner,
+//         .flags = &build_flags,
 //     });
     crypto.addCSourceFiles(.{
         .root = mbedtls_dep.path("library"),
         .files = &crypto_sources,
+        .flags = &build_flags,
     });
     b.installArtifact(crypto);
 
@@ -53,6 +62,7 @@ pub fn build(b: *std.Build) !void {
     x509.addCSourceFiles(.{
         .root = mbedtls_dep.path("library"),
         .files = &x509_sources,
+        .flags = &build_flags,
     });
 
     x509.linkLibrary(crypto);
@@ -70,6 +80,7 @@ pub fn build(b: *std.Build) !void {
     tls.addCSourceFiles(.{
         .root = mbedtls_dep.path("library"),
         .files = &tls_sources,
+        .flags = &build_flags,
     });
 
     tls.linkLibrary(crypto);
@@ -94,7 +105,7 @@ const crypto_sources = .{
     "bignum_core.c",
     "bignum_mod.c",
     "bignum_mod_raw.c",
-    "block_cipher.c",
+//     "block_cipher.c",
     "camellia.c",
     "ccm.c",
     "chacha20.c",
@@ -128,7 +139,7 @@ const crypto_sources = .{
     "padlock.c",
     "pem.c",
     "pk.c",
-    "pk_ecc.c",
+//     "pk_ecc.c",
     "pk_wrap.c",
     "pkcs12.c",
     "pkcs5.c",

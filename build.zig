@@ -6,6 +6,12 @@ fn is_c_file(path: []const u8) bool {
     return std.mem.endsWith(u8, path, ".c");
 }
 
+const build_flags = .{
+    "-std=gnu17",
+    "-Werror",
+    "-Wall",
+};
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -158,18 +164,19 @@ pub fn build(b: *std.Build) !void {
     git2.addCSourceFiles(.{
         .root = git2_sources.directory.dupe(b),
         .files = git2_sources.inner,
-        .flags = &.{ "-std=gnu17" },
+        .flags = &build_flags,
     });
     git2.addCSourceFiles(.{
         .root = util_sources.directory.dupe(b),
         .files = util_sources.inner,
-        .flags = &.{ "-std=gnu17" },
+        .flags = &build_flags,
     });
     git2.addCSourceFile(.{
         .file = libgit2_dep.path("src/util/hash/mbedtls.c"),
-        .flags = &.{ "-std=gnu17" },
+        .flags = &build_flags,
     });
     git2.linkLibrary(mbedtls_zig.artifact("mbedtls"));
+
 
     git2.addConfigHeader(config_header);
     git2.installConfigHeader(config_header);
@@ -204,6 +211,7 @@ fn build_xdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     xdiff.addCSourceFiles(.{
         .root = xdiff_src.directory.dupe(b),
         .files = xdiff_src.inner,
+        .flags = &(build_flags ++ .{ "-Wno-sign-compare" }),
     });
 
     const include = .{ "src/util", "include" };
@@ -230,6 +238,7 @@ fn build_llhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     llhttp.addCSourceFiles(.{
         .root = llhttp_src.directory.dupe(b),
         .files = llhttp_src.inner,
+        .flags = &(build_flags ++ .{ "-Wno-unused-parameter", "-Wno-unused-variable", "-Wno-missing-declarations" }),
     });
     llhttp.installHeader(libgit2_dep.path("deps/llhttp/llhttp.h"), "llhttp.h");
     return llhttp;
@@ -254,7 +263,7 @@ fn build_zlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     zlib.addCSourceFiles(.{
         .root = zlib_src.directory.dupe(b),
         .files = zlib_src.inner,
-
+        .flags = &build_flags,
     });
     zlib.installHeadersDirectory(libgit2_dep.path("deps/zlib"), "", .{});
     return zlib;
@@ -331,6 +340,7 @@ fn build_pcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     pcre.addCSourceFiles(.{
         .root = pcre_src.directory.dupe(b),
         .files = pcre_src.inner,
+        .flags = &(build_flags ++ .{ "-Wno-unused-but-set-variable" }),
     });
     pcre.root_module.addCMacro("HAVE_CONFIG_H", "");
     pcre.addConfigHeader(config_header);
