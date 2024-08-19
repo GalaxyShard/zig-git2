@@ -187,7 +187,22 @@ pub fn build(b: *std.Build) !void {
         git2.addIncludePath(libgit2_dep.path(path));
     }
 
+    const header = b.addTranslateC(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = libgit2_dep.path("include/git2.h"),
+    });
 
+    // Workaround to compile until addIncludePath is fixed
+    // Relative paths are used for almost everything in libgit2, but
+    // an absolute path happens to be used when GIT_DEPRECATE_HARD is off
+    // or when anything in git2/sys is included
+    header.defineCMacro("GIT_DEPRECATE_HARD", "1");
+
+    // TODO: https://github.com/ziglang/zig/pull/20851
+    // header.addIncludePath(libgit2_dep.path("include"));
+
+    _ = header.addModule("git2_header");
 
     b.installArtifact(git2);
 }
