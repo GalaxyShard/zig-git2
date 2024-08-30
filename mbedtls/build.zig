@@ -10,6 +10,7 @@ const build_flags = .{
     "-std=gnu17",
     "-Werror",
     "-Wall", "-Wextra", "-Wpedantic",
+    "-Wno-static-in-inline",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -47,6 +48,9 @@ pub fn build(b: *std.Build) !void {
         .files = &crypto_sources,
         .flags = &build_flags,
     });
+    if (target.result.os.tag == .windows) {
+        crypto.linkSystemLibrary("bcrypt");
+    }
     b.installArtifact(crypto);
 
 

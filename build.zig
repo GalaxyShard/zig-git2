@@ -9,7 +9,14 @@ fn is_c_file(path: []const u8) bool {
 const build_flags = .{
     "-std=gnu17",
     "-Werror",
-    "-Wall",
+    "-Wall", "-Wextra", "-Wstrict-prototypes",
+
+    "-Wno-missing-field-initializers",
+    "-Wno-single-bit-bitfield-constant-conversion",
+    // zlib/zutil.h defines OS_CODE twice on MacOS for some reason
+    "-Wno-macro-redefined",
+    // zlib/zutil.h defines fdopen to null on MacOS if it's not already defined
+    "-Dfdopen=fdopen",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -98,7 +105,7 @@ pub fn build(b: *std.Build) !void {
         .GIT_SHA256_MBEDTLS = {},
 
         // posix
-        .GIT_RAND_GETENTROPY = target.result.os.tag != .windows,
+        .GIT_RAND_GETENTROPY = target.result.os.tag != .windows and target.result.os.tag != .macos,
         .GIT_RAND_GETLOADAVG = target.result.os.tag != .windows,
 
         .GIT_IO_WSAPOLL = target.result.os.tag == .windows,
@@ -176,6 +183,9 @@ pub fn build(b: *std.Build) !void {
         .flags = &build_flags,
     });
     git2.linkLibrary(mbedtls_zig.artifact("mbedtls"));
+    if (target.result.os.tag == .windows) {
+        git2.linkSystemLibrary("secur32");
+    }
 
 
     git2.addConfigHeader(config_header);
