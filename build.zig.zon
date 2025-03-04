@@ -8,7 +8,9 @@
             .hash = "N-V-__8AAJbmLwHHxHDWkz0i6WIR6FpNe6tXSLzaPuWtvBBg",
         },
         .mbedtls = .{
-            .path = "./mbedtls",
+            //.path = "../zig-mbedtls",
+            .url = "git+https://codeberg.org/GalaxyShard/zig-mbedtls.git#6618fc3b98c71da9e91428755e16ac816757be66",
+            .hash = "mbedtls-0.0.0-cBQPwUUUAAAm6NtvAqkri_NEW-YiB_KJCrfKNNehwj6R",
         },
     },
     .paths = .{
