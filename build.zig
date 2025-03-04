@@ -2,7 +2,7 @@ const std = @import("std");
 
 const find_build_sources = @import("find-build-sources.zig");
 
-fn is_c_file(path: []const u8) bool {
+fn isCFile(path: []const u8) bool {
     return std.mem.endsWith(u8, path, ".c");
 }
 
@@ -15,8 +15,10 @@ const build_flags = .{
 
     "-Wno-missing-field-initializers",
     "-Wno-single-bit-bitfield-constant-conversion",
+
     // zlib/zutil.h defines OS_CODE twice on MacOS for some reason
     "-Wno-macro-redefined",
+
     // zlib/zutil.h defines fdopen to null on MacOS if it's not already defined
     "-Dfdopen=fdopen",
 };
@@ -137,17 +139,17 @@ pub fn build(b: *std.Build) !void {
     git2.linkLibrary(pcre);
     git2.linkLibrary(zlib);
 
-    const git2_sources = try find_build_sources.findDep(libgit2_dep, "src/libgit2", is_c_file);
+    const git2_sources = try find_build_sources.findDep(libgit2_dep, "src/libgit2", isCFile);
     defer git2_sources.deinit();
 
     const utilPredicateWindows = struct {
         fn inner(path: []const u8) bool {
-            return is_c_file(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "unix/");
+            return isCFile(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "unix/");
         }
     }.inner;
     const utilPredicate = struct {
         fn inner(path: []const u8) bool {
-            return is_c_file(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "win32/");
+            return isCFile(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "win32/");
         }
     }.inner;
 
@@ -196,15 +198,10 @@ pub fn build(b: *std.Build) !void {
         .root_source_file = libgit2_dep.path("include/git2.h"),
     });
 
-    // Workaround to compile until addIncludePath is fixed
-    // Relative paths are used for almost everything in libgit2, but
-    // an absolute path happens to be used when GIT_DEPRECATE_HARD is off
-    // or when anything in git2/sys is included
+    // May as well hard-deprecate
     header.defineCMacro("GIT_DEPRECATE_HARD", "1");
 
-    // TODO: https://github.com/ziglang/zig/pull/20851
-    // header.addIncludePath(libgit2_dep.path("include"));
-
+    header.addIncludePath(libgit2_dep.path("include"));
     _ = header.addModule("git2_header");
 
     b.installArtifact(git2);
@@ -223,7 +220,7 @@ fn buildXdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const xdiff_src = try find_build_sources.findDep(libgit2_dep, "deps/xdiff", is_c_file);
+    const xdiff_src = try find_build_sources.findDep(libgit2_dep, "deps/xdiff", isCFile);
     defer xdiff_src.deinit();
 
     xdiff.addCSourceFiles(.{
@@ -250,7 +247,7 @@ fn buildLlhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const llhttp_src = try find_build_sources.findDep(libgit2_dep, "deps/llhttp", is_c_file);
+    const llhttp_src = try find_build_sources.findDep(libgit2_dep, "deps/llhttp", isCFile);
     defer llhttp_src.deinit();
 
     llhttp.addCSourceFiles(.{
@@ -270,7 +267,7 @@ fn buildZlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const zlib_src = try find_build_sources.findDep(libgit2_dep, "deps/zlib", is_c_file);
+    const zlib_src = try find_build_sources.findDep(libgit2_dep, "deps/zlib", isCFile);
     defer zlib_src.deinit();
 
     const defines = .{ "NO_VIZ", "STDC", "NO_GZIP", "HAVE_SYS_TYPES_H", "HAVE_STDINT_H", "HAVE_STDDEF_H" };
@@ -352,7 +349,7 @@ fn buildPcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .PCREGREP_BUFSIZE = null,
     });
 
-    const pcre_src = try find_build_sources.findDep(libgit2_dep, "deps/pcre", is_c_file);
+    const pcre_src = try find_build_sources.findDep(libgit2_dep, "deps/pcre", isCFile);
     defer pcre_src.deinit();
 
     pcre.addCSourceFiles(.{
