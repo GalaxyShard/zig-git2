@@ -9,7 +9,9 @@ fn is_c_file(path: []const u8) bool {
 const build_flags = .{
     "-std=gnu17",
     "-Werror",
-    "-Wall", "-Wextra", "-Wpedantic",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
     "-Wno-static-in-inline",
 };
 
@@ -18,7 +20,6 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const mbedtls_dep = b.dependency("mbedtls", .{});
-
 
     const crypto = b.addStaticLibrary(.{
         .name = "mbedcrypto",
@@ -29,20 +30,20 @@ pub fn build(b: *std.Build) !void {
     crypto.addIncludePath(mbedtls_dep.path("include"));
 
     // TODO: when updating mbedtls, development release currently reorganizes files like this:
-//     const crypto_core = try find_build_sources.find(mbedtls_dep.builder, "tf-psa-crypto/core", is_c_file);
-//     defer crypto_core.deinit();
-//     const crypto_drivers = try find_build_sources.find(mbedtls_dep.builder, "tf-psa-crypto/drivers/builtin/src", is_c_file);
-//     defer crypto_drivers.deinit();
-//     crypto.addCSourceFiles(.{
-//         .root = crypto_core.directory.dupe(b),
-//         .files = crypto_core.inner,
-//         .flags = &build_flags,
-//     });
-//     crypto.addCSourceFiles(.{
-//         .root = crypto_drivers.directory.dupe(b),
-//         .files = crypto_drivers.inner,
-//         .flags = &build_flags,
-//     });
+    // const crypto_core = try find_build_sources.find(mbedtls_dep.builder, "tf-psa-crypto/core", is_c_file);
+    // defer crypto_core.deinit();
+    // const crypto_drivers = try find_build_sources.find(mbedtls_dep.builder, "tf-psa-crypto/drivers/builtin/src", is_c_file);
+    // defer crypto_drivers.deinit();
+    // crypto.addCSourceFiles(.{
+    //     .root = crypto_core.directory.dupe(b),
+    //     .files = crypto_core.inner,
+    //     .flags = &build_flags,
+    // });
+    // crypto.addCSourceFiles(.{
+    //     .root = crypto_drivers.directory.dupe(b),
+    //     .files = crypto_drivers.inner,
+    //     .flags = &build_flags,
+    // });
     crypto.addCSourceFiles(.{
         .root = mbedtls_dep.path("library"),
         .files = &crypto_sources,
@@ -52,8 +53,6 @@ pub fn build(b: *std.Build) !void {
         crypto.linkSystemLibrary("bcrypt");
     }
     b.installArtifact(crypto);
-
-
 
     const x509 = b.addStaticLibrary(.{
         .name = "mbedx509",
@@ -71,8 +70,6 @@ pub fn build(b: *std.Build) !void {
 
     x509.linkLibrary(crypto);
     b.installArtifact(x509);
-
-
 
     const tls = b.addStaticLibrary(.{
         .name = "mbedtls",
@@ -93,7 +90,6 @@ pub fn build(b: *std.Build) !void {
     tls.installHeadersDirectory(mbedtls_dep.path("include/mbedtls"), "mbedtls", .{});
     tls.installHeadersDirectory(mbedtls_dep.path("include/psa"), "psa", .{});
 
-
     b.installArtifact(tls);
 }
 
@@ -109,7 +105,7 @@ const crypto_sources = .{
     "bignum_core.c",
     "bignum_mod.c",
     "bignum_mod_raw.c",
-//     "block_cipher.c",
+    // "block_cipher.c",
     "camellia.c",
     "ccm.c",
     "chacha20.c",
@@ -143,7 +139,7 @@ const crypto_sources = .{
     "padlock.c",
     "pem.c",
     "pk.c",
-//     "pk_ecc.c",
+    // "pk_ecc.c",
     "pk_wrap.c",
     "pkcs12.c",
     "pkcs5.c",

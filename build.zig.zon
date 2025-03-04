@@ -11,9 +11,11 @@
         },
     },
     .paths = .{
+        "mbedtls",
         "build.zig",
         "build.zig.zon",
         "find-build-sources.zig",
-        "mbedtls",
+        "LICENSE",
+        "README.md",
     },
 }

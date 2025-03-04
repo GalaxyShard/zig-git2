@@ -9,7 +9,9 @@ fn is_c_file(path: []const u8) bool {
 const build_flags = .{
     "-std=gnu17",
     "-Werror",
-    "-Wall", "-Wextra", "-Wstrict-prototypes",
+    "-Wall",
+    "-Wextra",
+    "-Wstrict-prototypes",
 
     "-Wno-missing-field-initializers",
     "-Wno-single-bit-bitfield-constant-conversion",
@@ -34,8 +36,8 @@ pub fn build(b: *std.Build) !void {
         .include_path = "git2_features.h",
     }, .{
         // regex:
-        //      #cmakedefine (.+?)(( .*\n)|\n)
-        //      .\1 = null,\n
+        //     #cmakedefine (.+?)(( .*\n)|\n)
+        //     .\1 = null,\n
 
         // Optional debugging functionality
         .GIT_DEBUG_POOL = null,
@@ -118,10 +120,10 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .config_header = config_header,
     };
-    const llhttp = try build_llhttp(b, build_options);
-    const zlib = try build_zlib(b, build_options);
-    const pcre = try build_pcre(b, build_options);
-    const xdiff = try build_xdiff(b, build_options);
+    const llhttp = try buildLlhttp(b, build_options);
+    const zlib = try buildZlib(b, build_options);
+    const pcre = try buildPcre(b, build_options);
+    const xdiff = try buildXdiff(b, build_options);
     xdiff.linkLibrary(pcre);
 
     const git2 = b.addStaticLibrary(.{
@@ -135,38 +137,30 @@ pub fn build(b: *std.Build) !void {
     git2.linkLibrary(pcre);
     git2.linkLibrary(zlib);
 
-
-
-    const git2_sources = try find_build_sources.find_dep(libgit2_dep, "src/libgit2", is_c_file);
+    const git2_sources = try find_build_sources.findDep(libgit2_dep, "src/libgit2", is_c_file);
     defer git2_sources.deinit();
 
     const utilPredicateWindows = struct {
         fn inner(path: []const u8) bool {
-            return is_c_file(path)
-                and !std.mem.containsAtLeast(u8, path, 1, "hash/")
-                and !std.mem.containsAtLeast(u8, path, 1, "unix/");
+            return is_c_file(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "unix/");
         }
     }.inner;
     const utilPredicate = struct {
         fn inner(path: []const u8) bool {
-            return is_c_file(path)
-                and !std.mem.containsAtLeast(u8, path, 1, "hash/")
-                and !std.mem.containsAtLeast(u8, path, 1, "win32/");
+            return is_c_file(path) and !std.mem.containsAtLeast(u8, path, 1, "hash/") and !std.mem.containsAtLeast(u8, path, 1, "win32/");
         }
     }.inner;
 
-    const util_sources = (
-        if (target.result.os.tag == .windows)
-            try find_build_sources.find_dep(libgit2_dep, "src/util", utilPredicateWindows)
-        else
-            try find_build_sources.find_dep(libgit2_dep, "src/util", utilPredicate)
-    );
+    const util_sources = if (target.result.os.tag == .windows)
+        try find_build_sources.findDep(libgit2_dep, "src/util", utilPredicateWindows)
+    else
+        try find_build_sources.findDep(libgit2_dep, "src/util", utilPredicate);
     defer util_sources.deinit();
 
     // TODO: check if this works and/or is necessary
-//     git2.addWin32ResourceFile(.{
-//         .file = libgit2_dep.path("src/libgit2/git2.rc"),
-//     });
+    // git2.addWin32ResourceFile(.{
+    //     .file = libgit2_dep.path("src/libgit2/git2.rc"),
+    // });
 
     git2.addCSourceFiles(.{
         .root = git2_sources.directory.dupe(b),
@@ -186,7 +180,6 @@ pub fn build(b: *std.Build) !void {
     if (target.result.os.tag == .windows) {
         git2.linkSystemLibrary("secur32");
     }
-
 
     git2.addConfigHeader(config_header);
     git2.installConfigHeader(config_header);
@@ -221,7 +214,7 @@ const BuildOptions = struct {
     optimize: std.builtin.OptimizeMode,
     config_header: *std.Build.Step.ConfigHeader,
 };
-fn build_xdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
+fn buildXdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     const libgit2_dep = b.dependency("libgit2", .{});
 
     const xdiff = b.addStaticLibrary(.{
@@ -230,13 +223,13 @@ fn build_xdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const xdiff_src = try find_build_sources.find_dep(libgit2_dep, "deps/xdiff", is_c_file);
+    const xdiff_src = try find_build_sources.findDep(libgit2_dep, "deps/xdiff", is_c_file);
     defer xdiff_src.deinit();
 
     xdiff.addCSourceFiles(.{
         .root = xdiff_src.directory.dupe(b),
         .files = xdiff_src.inner,
-        .flags = &(build_flags ++ .{ "-Wno-sign-compare" }),
+        .flags = &(build_flags ++ .{"-Wno-sign-compare"}),
     });
 
     const include = .{ "src/util", "include" };
@@ -248,7 +241,7 @@ fn build_xdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     xdiff.installHeadersDirectory(libgit2_dep.path("deps/xdiff"), "", .{});
     return xdiff;
 }
-fn build_llhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
+fn buildLlhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     const libgit2_dep = b.dependency("libgit2", .{});
 
     const llhttp = b.addStaticLibrary(.{
@@ -257,7 +250,7 @@ fn build_llhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const llhttp_src = try find_build_sources.find_dep(libgit2_dep, "deps/llhttp", is_c_file);
+    const llhttp_src = try find_build_sources.findDep(libgit2_dep, "deps/llhttp", is_c_file);
     defer llhttp_src.deinit();
 
     llhttp.addCSourceFiles(.{
@@ -268,7 +261,7 @@ fn build_llhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     llhttp.installHeader(libgit2_dep.path("deps/llhttp/llhttp.h"), "llhttp.h");
     return llhttp;
 }
-fn build_zlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
+fn buildZlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     const libgit2_dep = b.dependency("libgit2", .{});
 
     const zlib = b.addStaticLibrary(.{
@@ -277,7 +270,7 @@ fn build_zlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const zlib_src = try find_build_sources.find_dep(libgit2_dep, "deps/zlib", is_c_file);
+    const zlib_src = try find_build_sources.findDep(libgit2_dep, "deps/zlib", is_c_file);
     defer zlib_src.deinit();
 
     const defines = .{ "NO_VIZ", "STDC", "NO_GZIP", "HAVE_SYS_TYPES_H", "HAVE_STDINT_H", "HAVE_STDDEF_H" };
@@ -293,7 +286,7 @@ fn build_zlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     zlib.installHeadersDirectory(libgit2_dep.path("deps/zlib"), "", .{});
     return zlib;
 }
-fn build_pcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
+fn buildPcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
     const libgit2_dep = b.dependency("libgit2", .{});
 
     const pcre = b.addStaticLibrary(.{
@@ -359,13 +352,13 @@ fn build_pcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .PCREGREP_BUFSIZE = null,
     });
 
-    const pcre_src = try find_build_sources.find_dep(libgit2_dep, "deps/pcre", is_c_file);
+    const pcre_src = try find_build_sources.findDep(libgit2_dep, "deps/pcre", is_c_file);
     defer pcre_src.deinit();
 
     pcre.addCSourceFiles(.{
         .root = pcre_src.directory.dupe(b),
         .files = pcre_src.inner,
-        .flags = &(build_flags ++ .{ "-Wno-unused-but-set-variable" }),
+        .flags = &(build_flags ++ .{"-Wno-unused-but-set-variable"}),
     });
     pcre.root_module.addCMacro("HAVE_CONFIG_H", "");
     pcre.addConfigHeader(config_header);
