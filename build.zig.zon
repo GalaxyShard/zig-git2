@@ -1,10 +1,11 @@
 .{
-    .name = "git2",
+    .name = .git2,
+    .fingerprint = 0x43370d7b21532d4a,
     .version = "0.0.0",
     .dependencies = .{
         .libgit2 = .{
-            .url = "git+https://github.com/libgit2/libgit2.git#v1.8.1",
-            .hash = "12208db692747f305b79ecfb3ac69e691d0b9584383ec4bcb0eb07b62b73de77b1cf",
+            .url = "git+https://github.com/libgit2/libgit2.git#v1.9.0",
+            .hash = "N-V-__8AAJbmLwHHxHDWkz0i6WIR6FpNe6tXSLzaPuWtvBBg",
         },
         .mbedtls = .{
             .path = "./mbedtls",
