@@ -2,22 +2,32 @@
     .name = .git2,
     .fingerprint = 0x43370d7b21532d4a,
     .version = "0.0.0",
+
     .dependencies = .{
+        // zig fetch --save=libgit2 https://github.com/libgit2/libgit2#v1.9.0
         .libgit2 = .{
             .url = "git+https://github.com/libgit2/libgit2.git#v1.9.0",
             .hash = "N-V-__8AAJbmLwHHxHDWkz0i6WIR6FpNe6tXSLzaPuWtvBBg",
         },
+
+        // zig fetch --save git+https://codeberg.org/GalaxyShard/zig-mbedtls
         .mbedtls = .{
             //.path = "../zig-mbedtls",
-            .url = "git+https://codeberg.org/GalaxyShard/zig-mbedtls.git#6618fc3b98c71da9e91428755e16ac816757be66",
-            .hash = "mbedtls-0.0.0-cBQPwUUUAAAm6NtvAqkri_NEW-YiB_KJCrfKNNehwj6R",
+            .url = "git+https://codeberg.org/GalaxyShard/zig-mbedtls#d32d4a1fd070170d3b80ef5059cbf30459f4d9dc",
+            .hash = "mbedtls-0.0.0-cBQPwccRAACZ4TUvTU8ritZ3Uo7g08L8szQN8EoU-Vfc",
+        },
+
+        // zig fetch --save git+https://codeberg.org/GalaxyShard/zig-find-sources
+        .find_sources = .{
+            .url = "git+https://codeberg.org/GalaxyShard/zig-find-sources#914d9edfe6213623bbbc60189a4dff3f19a9b878",
+            .hash = "find_sources-0.0.0-yVGOCFGTAABsWI_zlgA4JZVxVDOvNn8U5YA2il7pg70s",
         },
     },
+
     .paths = .{
         "mbedtls",
         "build.zig",
         "build.zig.zon",
-        "find-build-sources.zig",
         "LICENSE",
         "README.md",
     },

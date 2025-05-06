@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const find_build_sources = @import("find-build-sources.zig");
+const find_sources = @import("find_sources");
 
 fn isCFile(path: []const u8) bool {
     return std.mem.endsWith(u8, path, ".c");
@@ -139,7 +139,7 @@ pub fn build(b: *std.Build) !void {
     git2.linkLibrary(pcre);
     git2.linkLibrary(zlib);
 
-    const git2_sources = try find_build_sources.findDep(libgit2_dep, "src/libgit2", isCFile);
+    const git2_sources = try find_sources.searchDependency(libgit2_dep, "src/libgit2", isCFile);
     defer git2_sources.deinit();
 
     const utilPredicateWindows = struct {
@@ -154,9 +154,9 @@ pub fn build(b: *std.Build) !void {
     }.inner;
 
     const util_sources = if (target.result.os.tag == .windows)
-        try find_build_sources.findDep(libgit2_dep, "src/util", utilPredicateWindows)
+        try find_sources.searchDependency(libgit2_dep, "src/util", utilPredicateWindows)
     else
-        try find_build_sources.findDep(libgit2_dep, "src/util", utilPredicate);
+        try find_sources.searchDependency(libgit2_dep, "src/util", utilPredicate);
     defer util_sources.deinit();
 
     // TODO: check if this works and/or is necessary
@@ -166,12 +166,12 @@ pub fn build(b: *std.Build) !void {
 
     git2.addCSourceFiles(.{
         .root = git2_sources.directory.dupe(b),
-        .files = git2_sources.inner,
+        .files = git2_sources.paths,
         .flags = &build_flags,
     });
     git2.addCSourceFiles(.{
         .root = util_sources.directory.dupe(b),
-        .files = util_sources.inner,
+        .files = util_sources.paths,
         .flags = &build_flags,
     });
     git2.addCSourceFile(.{
@@ -220,12 +220,12 @@ fn buildXdiff(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const xdiff_src = try find_build_sources.findDep(libgit2_dep, "deps/xdiff", isCFile);
+    const xdiff_src = try find_sources.searchDependency(libgit2_dep, "deps/xdiff", isCFile);
     defer xdiff_src.deinit();
 
     xdiff.addCSourceFiles(.{
         .root = xdiff_src.directory.dupe(b),
-        .files = xdiff_src.inner,
+        .files = xdiff_src.paths,
         .flags = &(build_flags ++ .{"-Wno-sign-compare"}),
     });
 
@@ -247,12 +247,12 @@ fn buildLlhttp(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const llhttp_src = try find_build_sources.findDep(libgit2_dep, "deps/llhttp", isCFile);
+    const llhttp_src = try find_sources.searchDependency(libgit2_dep, "deps/llhttp", isCFile);
     defer llhttp_src.deinit();
 
     llhttp.addCSourceFiles(.{
         .root = llhttp_src.directory.dupe(b),
-        .files = llhttp_src.inner,
+        .files = llhttp_src.paths,
         .flags = &(build_flags ++ .{ "-Wno-unused-parameter", "-Wno-unused-variable", "-Wno-missing-declarations" }),
     });
     llhttp.installHeader(libgit2_dep.path("deps/llhttp/llhttp.h"), "llhttp.h");
@@ -267,7 +267,7 @@ fn buildZlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .optimize = options.optimize,
         .link_libc = true,
     });
-    const zlib_src = try find_build_sources.findDep(libgit2_dep, "deps/zlib", isCFile);
+    const zlib_src = try find_sources.searchDependency(libgit2_dep, "deps/zlib", isCFile);
     defer zlib_src.deinit();
 
     const defines = .{ "NO_VIZ", "STDC", "NO_GZIP", "HAVE_SYS_TYPES_H", "HAVE_STDINT_H", "HAVE_STDDEF_H" };
@@ -277,7 +277,7 @@ fn buildZlib(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
 
     zlib.addCSourceFiles(.{
         .root = zlib_src.directory.dupe(b),
-        .files = zlib_src.inner,
+        .files = zlib_src.paths,
         .flags = &build_flags,
     });
     zlib.installHeadersDirectory(libgit2_dep.path("deps/zlib"), "", .{});
@@ -349,12 +349,12 @@ fn buildPcre(b: *std.Build, options: BuildOptions) !*std.Build.Step.Compile {
         .PCREGREP_BUFSIZE = null,
     });
 
-    const pcre_src = try find_build_sources.findDep(libgit2_dep, "deps/pcre", isCFile);
+    const pcre_src = try find_sources.searchDependency(libgit2_dep, "deps/pcre", isCFile);
     defer pcre_src.deinit();
 
     pcre.addCSourceFiles(.{
         .root = pcre_src.directory.dupe(b),
-        .files = pcre_src.inner,
+        .files = pcre_src.paths,
         .flags = &(build_flags ++ .{"-Wno-unused-but-set-variable"}),
     });
     pcre.root_module.addCMacro("HAVE_CONFIG_H", "");
